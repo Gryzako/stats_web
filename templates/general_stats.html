@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block body_content %}
+<div class="container mt-4">
+    <div class="row mb-4 justify-content-center text-center">
+        <div class="col-md-2">
+            <img src="{{ url_for('static', filename='poland.png') }}" alt="Poland"><h5>Warsaw</h5>
+            <div id="clock-warsaw" class="clock">--:--:--</div>
+        </div>
+        <div class="col-md-2">
+            <img src="{{ url_for('static', filename='philippines.png') }}" alt="Manila"><h5>Manila</h5>
+            <div id="clock-manila" class="clock">--:--:--</div>
+        </div>
+        <div class="col-md-2">
+            <img src="{{ url_for('static', filename='mexico.png') }}" alt="Mexico"><h5>Mexico</h5>
+            <div id="clock-mexico" class="clock">--:--:--</div>
+        </div>
+    </div>
+
+    <h4 class="text-center mb-3">
+        Agents Availability
+        <input type="date" id="datePicker" class="form-control d-inline w-auto ms-3" onchange="loadAvailabilityData()" />
+    </h4>
+    
+    <div class="table-container">
+        <table class="table table-bordered text-center">
+            <thead>
+                <tr>
+                    <th>HUB</th>
+                    <th>Region</th>
+                    <th><img src="{{ url_for('static', filename='phone.svg') }}" alt="Phone" width="24" height="24"><br>Phone</th>
+                    <th><img src="{{ url_for('static', filename='chat.svg') }}" alt="Chat" width="24" height="24"><br>Chat</th>
+                    <th><img src="{{ url_for('static', filename='offline.svg') }}" alt="Offline" width="24" height="24"><br>Offline</th>
+                    <th><img src="{{ url_for('static', filename='weekend.svg') }}" alt="Offline" width="24" height="24"><br>Weekenders</th>
+                    <th><img src="{{ url_for('static', filename='special.svg') }}" alt="Special Tasks" width="24" height="24"><br>Special Tasks</th>
+                    <th><img src="{{ url_for('static', filename='unavailable.svg') }}" alt="Unavailable" width="24" height="24"><br>Unavailable</th>
+                </tr>
+            </thead>
+            <tbody id="availability-table-body">
+                <tr>
+                    <td colspan="8" class="text-muted text-center">Loading data...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function loadAvailabilityData() {
+            const selectedDate = document.getElementById("datePicker").value;
+            fetch(`/get_availability?date=${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById("availability-table-body");
+                    tbody.innerHTML = "";
+
+                    ["Warsaw", "Mexico"].forEach(hub => {
+                        const hubData = data[hub] || { phone: 0, chat: 0, offline: 0, special: 0, unavailable: 0 };
+                        const row = `<tr>
+                            <td>${hub}</td>
+                            <td>-</td>
+                            <td>${hubData.phone}</td>
+                            <td>${hubData.chat}</td>
+                            <td>${hubData.offline}</td>
+                            <td>-</td>
+                            <td>${hubData.special}</td>
+                            <td>${hubData.unavailable}</td>
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    });
+
+                    const manilaData = data.Manila || {};
+                    ["EMEA", "APAC", "AMER"].forEach((region, idx) => {
+                        const regionStats = manilaData[region] || { phone: 0, chat: 0, offline: 0, weekenders: 0 };
+                        const hubCell = idx === 0 ? `<td rowspan="3">Manila</td>` : "";
+                        const special = idx === 0 ? `<td rowspan="3">${data['ManilaSpecial'] || 0}</td>` : "";
+                        const unavailable = idx === 0 ? `<td rowspan="3">${data['ManilaUnavailable'] || 0}</td>` : "";
+
+                        const row = `<tr>
+                            ${hubCell}
+                            <td>${region}</td>
+                            <td>${regionStats.phone}</td>
+                            <td>${regionStats.chat}</td>
+                            <td>${regionStats.offline}</td>
+                            <td>${regionStats.weekenders}</td>
+                            ${special}${unavailable}
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                })
+                .catch(err => {
+                    document.getElementById("availability-table-body").innerHTML =
+                        `<tr><td colspan="8" class="text-danger text-center">Error loading data.</td></tr>`;
+                    console.error(err);
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const today = new Date().toISOString().split("T")[0];
+            document.getElementById("datePicker").value = today;
+            loadAvailabilityData();
+        });
+    </script>
+
+    <script>
+        function updateClocks() {
+    const now = new Date();
+    const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        document.getElementById("clock-warsaw").textContent =
+            now.toLocaleTimeString("en-US", { ...options, timeZone: "Europe/Warsaw" });
+        document.getElementById("clock-manila").textContent =
+            now.toLocaleTimeString("en-US", { ...options, timeZone: "Asia/Manila" });
+        document.getElementById("clock-mexico").textContent =
+            now.toLocaleTimeString("en-US", { ...options, timeZone: "America/Mexico_City" });
+}
+
+
+        setInterval(updateClocks, 1000);
+        document.addEventListener("DOMContentLoaded", updateClocks);
+    </script>
+
+    <style>
+        .clock {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            max-height: 70vh;
+            overflow: auto;
+            border: 1px solid #ddd;
+        }
+        table {
+            width: 100%;
+            font-size: 14px;
+            border-collapse: collapse;
+            margin: auto;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #343a40;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+    </style>
+</div>
+{% endblock %}

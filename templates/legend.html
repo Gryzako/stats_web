@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block body_content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center"></h2>
+
+    <div class="table-container">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Definition</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="color-cell" style="background-color:#FF6600">EM_O</td><td>EMEA Offline</td></tr>
+                <tr><td class="color-cell" style="background-color:#FF6600">AP_O</td><td>APAC Offline</td></tr>
+                <tr><td class="color-cell" style="background-color:#FF6600">AM_O</td><td>AMER Offline</td></tr>
+                <tr><td class="color-cell" style="background-color:#323299; color:white">EM_C</td><td>EMEA Chat</td></tr>
+                <tr><td class="color-cell" style="background-color:#323299; color:white">AP_C</td><td>APAC Chat</td></tr>
+                <tr><td class="color-cell" style="background-color:#323299; color:white">AM_C</td><td>AMER Chat</td></tr>
+                <tr><td class="color-cell" style="background-color:#7399BD">EM_P</td><td>EMEA Phone</td></tr>
+                <tr><td class="color-cell" style="background-color:#7399BD">AP_P</td><td>APAC Phone</td></tr>
+                <tr><td class="color-cell" style="background-color:#7399BD">AM_P</td><td>AMER Phone</td></tr>
+                <tr><td class="color-cell" style="background-color:#E97451">AP_W</td><td>APAC Weekender</td></tr>
+                <tr><td class="color-cell" style="background-color:#E97451">EM_W</td><td>EMEA Weekender</td></tr>
+                <tr><td class="color-cell" style="background-color:#E97451">AM_W</td><td>AMER Weekender</td></tr>
+                <tr><td class="color-cell" style="background-color:#808080">RD</td><td>Rest Day</td></tr>
+                <tr><td class="color-cell" style="background-color:#339900">HV</td><td>Holiday Vacation</td></tr>
+                <tr><td class="color-cell" style="background-color:#339900">PH</td><td>Public Holiday</td></tr>
+                <tr><td class="color-cell" style="background-color:#CC9999">EL</td><td>Emergency Leave</td></tr>
+                <tr><td class="color-cell" style="background-color:#990000; color:white">SL</td><td>Sickness</td></tr>
+                <tr><td class="color-cell" style="background-color:#004400; color:white">VL</td><td>Vacation</td></tr>
+                <tr><td class="color-cell" style="background-color:#FFCCCC">SP</td><td>Special Projects</td></tr>
+                <tr><td class="color-cell" style="background-color:#CC33FF; color:white">KCS</td><td>KCS Task</td></tr>
+                <tr><td class="color-cell" style="background-color:#9D145B; color:white">KDE</td><td>KDE Task</td></tr>
+                <tr><td class="color-cell" style="background-color:#99FF99">ML</td><td>Maternity Leave</td></tr>
+                <tr><td class="color-cell" style="background-color:#66FF66">PL</td><td>Paternity Leave</td></tr>
+                <tr><td class="color-cell" style="background-color:#FFCC99">BA</td><td>Buddy Agent Task</td></tr>
+                <tr><td class="color-cell" style="background-color:#00EE00">BD</td><td>Blood Donation</td></tr>
+                <tr><td class="color-cell" style="background-color:#6666FF">M</td><td>Meeting</td></tr>
+                <tr><td class="color-cell" style="background-color:#9900CC; color:white">TR</td><td>Training</td></tr>
+                <tr><td class="color-cell" style="background-color:#FFB347">RB</td><td>Recuperation of Bank Holiday</td></tr>
+                <tr><td class="color-cell" style="background-color:#99CCFF">O</td><td>Occasional Holiday</td></tr>
+                <tr><td class="color-cell" style="background-color:#FF99C8">OS</td><td>Child care sickness leave</td></tr>
+                <tr><td class="color-cell" style="background-color:#CCFF66">DD</td><td>Day on Demand</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .table-container {
+        max-height: 70vh;
+        overflow: auto;
+        border: 1px solid #ddd;
+    }
+
+    table {
+        width: max-content;
+        font-size: 14px;
+        border-collapse: collapse;
+        margin: auto;
+    }
+
+    th, td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        vertical-align: middle;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    th {
+        background-color: #343a40;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .color-cell {
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

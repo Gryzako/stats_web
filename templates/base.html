@@ -4,78 +4,143 @@
     <title>DSV Service Desk Schedule</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Animate.css for dropdown animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
     <style>
         body, html {
-            height: 100%;
             margin: 0;
-            display: flex;
-            flex-direction: row;
-        }
-        .sidebar {
-            width: 300px;
-            height: 100vh;
-            background-color: #f8f9fa;
-            padding-top: 20px;
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-        }
-        .header {
-            background-color: #ffffff;
-            color: rgb(0, 0, 0);
-            height: 50px;
-            width: 1500px;
-            padding: 15px;
-            text-align: center;
-        }
-        .main-content {
-            margin-left: 300px; /* Offset for sidebar */
+            padding: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            width: calc(100% - 300px);
-            min-height: 100vh;
         }
+
         .content-wrapper {
             flex-grow: 1;
             padding: 20px;
-            text-align: center;
         }
+
         .footer {
-            background-color: #ffffff;
+            background-color: #f8f9fa;
             padding: 10px;
             text-align: center;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-nav .nav-link {
+            position: relative;
+            font-weight: 500;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #0d6efd;
+        }
+
+        .navbar-nav .nav-link.active {
+            font-weight: 600;
+            color: #0d6efd !important;
+        }
+
+        .navbar-nav .nav-link.active::after {
+            content: '';
+            display: block;
             width: 100%;
+            height: 3px;
+            background-color: #0d6efd;
+            border-radius: 2px;
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+        }
+
+        .dropdown-menu {
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f3f5;
+            color: #3170b8;
         }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar (Menu) -->
-    <div class="sidebar">
-        {% include "menu.html" %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold text-primary" href="{{ url_for('index') }}">DSV Schedule</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item mx-1">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">Schedule</a>
+                    </li>
+                    <li class="nav-item mx-1">
+                        <a class="nav-link {% if request.endpoint == 'legend' %}active{% endif %}" href="{{ url_for('legend') }}">Legend</a>
+                    </li>
+
+                    <!-- Stats Dropdown -->
+                    <li class="nav-item dropdown mx-1">
+                        <a class="nav-link dropdown-toggle {% if request.endpoint in ['general_stats', 'shift_stats'] %}active{% endif %}"
+                           href="#" id="statsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Stats
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn animate__faster" aria-labelledby="statsDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('general_stats') }}">📊 General Stats</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('shift_stats') }}">📈 Detailed Stats</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- More Dropdown -->
+                    <li class="nav-item dropdown mx-1">
+                        <a class="nav-link dropdown-toggle {% if request.endpoint in ['dayoff_show_summary', 'working_days'] %}active{% endif %}"
+                           href="#" id="moreDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            More
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn animate__faster" aria-labelledby="moreDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('dayoff_show_summary') }}">🗓️ Day Off Status</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('working_days') }}">💼 Working Days</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('manila_ho') }}">📋 Manila Home Office</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('time_cal') }}">🌍 Time Zone Calculator</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('allocation') }}">📢 Allocation</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item mx-1">
+                        <a class="nav-link disabled text-muted" aria-disabled="true">About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="content-wrapper container">
+        {% block body_content %}{% endblock %}
     </div>
 
-    <!-- Main Content Wrapper -->
-    <div class="main-content">
-
-        <!-- Header -->
-        <div class="header">
-            {% include "header.html" %}
-        </div>
-
-        <!-- Main Content Area -->
-        <div class="content-wrapper">
-            {% block body_content %} {% endblock %}
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            {% include "footer.html" %}
-        </div>
-
+    <!-- Footer -->
+    <div class="footer">
+        {% include "footer.html" %}
     </div>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

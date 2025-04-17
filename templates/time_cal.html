@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block body_content %}
+
+<h2 class="text-center mb-4">🌍 Time Zone Comparison</h2>
+
+<div class="time-selector d-flex justify-content-center mb-4">
+  <input type="date" id="dateInput" class="form-control w-auto" />
+</div>
+
+<table class="timeline-table table" id="timelineTable"></table>
+
+<style>
+  .timeline-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+  }
+
+  .timeline-table td {
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: background-color 0.3s ease, outline 0.3s ease;
+  }
+
+  .city-cell {
+    font-weight: 600;
+    background: #fff;
+    position: sticky;
+    left: 0;
+    background-color: #f0f0f0;
+    border-right: 1px solid #ddd;
+    z-index: 1;
+  }
+
+  .hour-cell {
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+
+  .highlight {
+    background-color: #ffd54f !important;
+    font-weight: bold;
+  }
+
+  .day-separator {
+    border-left: 2px solid #999;
+    background-color: #eaeaea;
+  }
+
+  .date-frame {
+    border: 2px solid #bbb;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px;
+    color: #555;
+    background: #fff;
+    margin-top: 8px;
+  }
+
+  .hover-highlight {
+    background-color: #bbdefb !important;
+    outline: 2px solid #42a5f5;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      background-color: #e3f2fd;
+    }
+    to {
+      background-color: #bbdefb;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hour-cell {
+      padding: 2px 4px;
+    }
+
+    .date-frame {
+      font-size: 12px;
+    }
+  }
+</style>
+
+<script>
+  const timezones = [
+    { name: "Warsaw", tz: "Europe/Warsaw" },
+    { name: "Manila", tz: "Asia/Manila" },
+    { name: "Mexico City", tz: "America/Mexico_City" }
+  ];
+
+  function renderTimeline(selectedDate) {
+    const table = document.getElementById("timelineTable");
+    table.innerHTML = '';
+
+    timezones.forEach(zone => {
+      const timeRow = document.createElement("tr");
+      const cityCell = document.createElement("td");
+      cityCell.textContent = zone.name;
+      cityCell.className = "city-cell";
+      timeRow.appendChild(cityCell);
+
+      const hourDates = [];
+
+      for (let h = 0; h < 24; h++) {
+        const td = document.createElement("td");
+        td.className = "hour-cell";
+        td.classList.add(`col-${h}`); // Dodaj klasę kolumny
+
+        const date = new Date(selectedDate);
+        date.setUTCHours(h, 0, 0, 0);
+
+        const time = date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          hour12: true,
+          timeZone: zone.tz
+        });
+
+        const fullDate = date.toLocaleDateString("en-CA", { timeZone: zone.tz });
+        hourDates.push(fullDate);
+
+        td.textContent = time;
+
+        if (time === "12 AM") td.classList.add("day-separator");
+
+        const now = new Date();
+        const nowDate = now.toISOString().split("T")[0];
+        const nowHour = now.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          hour12: true,
+          timeZone: zone.tz
+        });
+
+        if (selectedDate === nowDate && nowHour === time) {
+          td.classList.add("highlight");
+        }
+
+        timeRow.appendChild(td);
+      }
+
+      table.appendChild(timeRow);
+
+      // Date frame row
+      const dateRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+      emptyCell.className = "city-cell";
+      dateRow.appendChild(emptyCell);
+
+      let currentDate = hourDates[0];
+      let span = 1;
+
+      for (let i = 1; i <= hourDates.length; i++) {
+        if (hourDates[i] !== currentDate) {
+          const td = document.createElement("td");
+          td.colSpan = span;
+          td.innerHTML = `<div class="date-frame">${formatPrettyDate(currentDate, zone.tz)}</div>`;
+          dateRow.appendChild(td);
+          currentDate = hourDates[i];
+          span = 1;
+        } else {
+          span++;
+        }
+      }
+
+      table.appendChild(dateRow);
+    });
+
+    // Obsługa hovera – po wyrenderowaniu
+    const hourCells = document.querySelectorAll('.hour-cell');
+    hourCells.forEach(cell => {
+      cell.addEventListener('mouseenter', () => {
+        const colClass = Array.from(cell.classList).find(cls => cls.startsWith('col-'));
+        const related = document.querySelectorAll(`.${colClass}`);
+        related.forEach(c => c.classList.add('hover-highlight'));
+      });
+      cell.addEventListener('mouseleave', () => {
+        const colClass = Array.from(cell.classList).find(cls => cls.startsWith('col-'));
+        const related = document.querySelectorAll(`.${colClass}`);
+        related.forEach(c => c.classList.remove('hover-highlight'));
+      });
+    });
+  }
+
+  function formatPrettyDate(dateString, tz) {
+    const date = new Date(dateString + "T00:00:00");
+    return date.toLocaleDateString("en-US", {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      timeZone: tz
+    });
+  }
+
+  const dateInput = document.getElementById("dateInput");
+  const today = new Date().toISOString().split("T")[0];
+  dateInput.value = today;
+  renderTimeline(today);
+
+  dateInput.addEventListener("change", () => {
+    renderTimeline(dateInput.value);
+  });
+</script>
+
+{% endblock %}

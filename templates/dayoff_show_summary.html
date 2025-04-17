@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block body_content %}
+
+<style>
+    .table-wrapper {
+        max-height: calc(100vh - 360px);
+        overflow: auto;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        position: relative;
+    }
+
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: max-content;
+        min-width: 100%;
+        margin: 0;
+    }
+
+    th, td {
+        white-space: nowrap;
+        text-align: center;
+        vertical-align: middle;
+        padding: 8px 12px;
+        background-clip: padding-box;
+    }
+
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #e9f3ff;
+        font-weight: bold;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .table-wrapper::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb {
+        background-color: #c2c2c2;
+        border-radius: 6px;
+    }
+
+    .table-wrapper::-webkit-scrollbar-track {
+        background-color: #f1f1f1;
+    }
+
+    .search-box {
+        width: 100%;
+        margin-bottom: 15px;
+        padding: 10px 14px;
+        font-size: 15px;
+        border: 1px solid #ced4da;
+    }
+
+    .header-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .header-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #333;
+    }
+</style>
+
+<div class="container mt-0 mb-5">
+    <div class="header-section mb-3">
+        <div class="header-title">🛌 Agent Day Off Summary</div>
+        <input type="text" id="searchInput" class="form-control search-box" placeholder="🔍 Search agent by name...">
+    </div>
+
+    <div class="table-wrapper">
+        {% for table in tables %}
+            {{ table | safe }}
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.getElementById("searchInput").addEventListener("keyup", function () {
+        const filter = this.value.toLowerCase();
+        const tables = document.querySelectorAll(".table-wrapper table");
+
+        tables.forEach(table => {
+            const rows = table.getElementsByTagName("tr");
+            for (let i = 1; i < rows.length; i++) {
+                let rowText = rows[i].innerText.toLowerCase();
+                rows[i].style.display = rowText.includes(filter) ? "" : "none";
+            }
+        });
+    });
+</script>
+
+{% endblock %}

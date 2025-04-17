@@ -1,87 +1,181 @@
 {% extends "base.html" %}
-
 {% block body_content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Data Table</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .table-container {
-            font-size: 12px; /* Mniejsza czcionka dla tabeli */
-        }
-        .filter-input {
-            width: 100%;
-            padding: 4px;
-            font-size: 12px;
-            border: 1px solid #ccc;
-            display: block; /* Aby był pod nazwą kolumny */
-        }
-        /* Skrócone nazwy kolumn */
-        .column-header {
-            min-width: 140px; /* Powiększone o 2 cm */
-            max-width: 320px; /* Zapobiega zbyt dużym kolumnom */
-            word-wrap: break-word;
-            white-space: normal;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
+<div class="container-fluid mt-2">
 
-    <div class="container mt-5">
-        <!-- Table Container -->
-        <div class="table-responsive table-container">
-            <table class="table table-striped table-bordered" id="dataTable">
-                <thead class="table-dark">
-                    <tr>
-                        {% for col in columns %}
-                        <th class="column-header" title="{{ col }}">
-                            {{ col[:10] }}  <!-- Truncate to first 10 characters safely -->
-                            <input type="text" class="filter-input" onkeyup="filterTable({{ loop.index0 }})">
-                        </th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in data %}
-                    <tr>
-                        {% for col in columns %}
-                        <td>{{ row[col] }}</td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <!-- Month Selector + Download Button -->
+    <div class="d-flex justify-content-center align-items-center mb-4 gap-3 flex-wrap">
+        <form method="get" action="/" class="d-flex align-items-center gap-2">
+            <label for="month" class="me-2">Month:</label>
+            <select id="month" name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for month in months %}
+                    <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <a href="{{ url_for('download_schedule', month=selected_month) }}" class="btn btn-success">Download Schedule</a>
     </div>
 
-    <script>
-        function filterTable(columnIndex) {
-            var input, filter, table, tr, td, i, txtValue;
-            input = document.getElementsByClassName("filter-input")[columnIndex];
-            filter = input.value.toUpperCase();
-            table = document.getElementById("dataTable");
-            tr = table.getElementsByTagName("tr");
+    <!-- Data Table -->
+    <div class="table-responsive table-container">
+        <table class="table table-striped table-bordered w-100" id="dataTable">
+            <thead class="table-dark align-middle text-center">
+                <tr>
+                    {% for col, display_col in column_display_pairs %}
+                    <th class="column-header" title="{{ col }}">
+                        <div>{{ display_col.replace('\n', '<br>') | safe }}</div>
+                        <input type="text" class="filter-input" onkeyup="filterTable()" data-column="{{ loop.index0 }}">
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    {% for col, _ in column_display_pairs %}
+                    <td class="{% if col == 'Task' %}task-cell{% elif col not in ['Agent Name', 'Task', 'Hub'] %}text-center{% endif %}">
+                        {{ row[col] }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>            
+        </table>
+    </div>
+</div>
 
-            for (i = 1; i < tr.length; i++) { // Start from row 1 (data rows)
-                td = tr[i].getElementsByTagName("td")[columnIndex];
-                if (td) {
-                    txtValue = td.textContent || td.innerText;
-                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        tr[i].style.display = "";
-                    } else {
-                        tr[i].style.display = "none";
+<style>
+    .table-container {
+        font-size: 12px;
+        width: 100%;
+        overflow: auto;
+        max-height: 75vh; /* <- wysokość maksymalna dla scrolla w pionie */
+        border: 1px solid #ddd;
+    }
+
+    /* Sticky nagłówki */
+    table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background-color: #212529; /* Bootstrap dark */
+        color: white;
+        text-align: center;
+    }
+
+    /* Pozostawiam resztę jak było */
+    .filter-input {
+        width: 90%;
+        padding: 3px 5px;
+        font-size: 11px;
+        margin-top: 3px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+
+    .column-header {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+        font-size: 12px;
+    }
+
+    th, td {
+        padding: 6px;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .container {
+        max-width: 100%;
+    }
+
+    .task-cell {
+        max-width: 100px;
+        overflow-x: auto;
+        white-space: nowrap;
+        display: block;
+        padding: 6px;
+        border: 1px solid #ddd;
+        background-color: #fff;
+    }
+
+    .task-cell::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .task-cell::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+
+</style>
+
+<script>
+    function filterTable() {
+        const table = document.getElementById("dataTable");
+        const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+        const filters = document.getElementsByClassName("filter-input");
+
+        for (let i = 0; i < rows.length; i++) {
+            let visible = true;
+            for (let f = 0; f < filters.length; f++) {
+                const columnIndex = parseInt(filters[f].getAttribute("data-column"));
+                const filterValue = filters[f].value.toUpperCase();
+                const cell = rows[i].getElementsByTagName("td")[columnIndex];
+                if (cell) {
+                    const cellText = cell.textContent || cell.innerText;
+                    if (!cellText.toUpperCase().includes(filterValue)) {
+                        visible = false;
+                        break;
                     }
-                }       
+                }
+            }
+            rows[i].style.display = visible ? "" : "none";
+        }
+    }
+
+    const colorMapping = {
+    "EM_O": "#FF6600", "AP_O": "#FF6600", "AM_O": "#FF6600",
+    "EM_C": "#323299", "AP_C": "#323299", "AM_C": "#323299",
+    "EM_P": "#7399BD", "AP_P": "#7399BD", "AM_P": "#7399BD",
+    "AP_W": "#E97451", "EM_W": "#E97451", "AM_W": "#E97451",
+    "RD": "#808080", "HV": "#339900", "PH": "#339900",
+    "EL": "#CC9999", "SL": "#990000", "VL": "#004400",
+    "SP": "#FFCCCC", "KCS": "#CC33FF", "KDE": "#9D145B",
+    "ML": "#99FF99", "PL": "#66FF66", "BA": "#FFCC99",
+    "BD": "#00EE00", "M": "#6666FF", "TR": "#9900CC",
+    "RB": "#FFB347", "O": "#99CCFF", "OS": "#FF99C8", "DD": "#CCFF66"
+        };
+
+    const whiteTextCodes = ["EM_C", "AP_C", "AM_C", "SL", "VL", "KDE", "TR", "KCS"];
+
+    function applyCellColors() {
+        const table = document.getElementById("dataTable");
+        const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+
+        for (let i = 0; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName("td");
+            for (let j = 0; j < cells.length; j++) {
+                const content = cells[j].innerText.trim();
+                const columnName = table.tHead.rows[0].cells[j].getAttribute("title");
+
+                if (
+                    !["Agent Name", "Task", "Hub"].includes(columnName) &&
+                    colorMapping.hasOwnProperty(content)
+                ) {
+                    cells[j].style.backgroundColor = colorMapping[content];
+                    if (whiteTextCodes.includes(content)) {
+                        cells[j].style.color = "#FFFFFF";
+                    }
+                }
+
             }
         }
-    </script>
+    }
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
 
+    window.addEventListener('DOMContentLoaded', applyCellColors);
+</script>
 {% endblock %}

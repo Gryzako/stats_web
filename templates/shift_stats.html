@@ -1,111 +1,108 @@
 {% extends "base.html" %}
-
 {% block body_content %}
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shift Statistics</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .btn-active {
-            background-color: #ff9800 !important; /* Orange for active button */
-            color: white !important;
-            font-weight: bold;
-        }
-        .tables-container {
-            display: flex;
-            justify-content: space-between; /* Ustawienie tabel obok siebie */
-            align-items: flex-start;
-            gap: 30px; /* Odstęp między tabelami */
-            margin-top: 20px;
-        }
-        .shift-table {
-            width: 50%; /* Szerokość tabeli zmian */
-        }
-        .agents-table {
-            width: 40%; /* Szerokość tabeli agentów */
-        }
-    </style>
-</head>
-<body>
-    <div class="container mt-5">
-        <h1 class="text-center">Shift Assignment Statistics</h1>
-
-        <!-- Hub Selection Buttons -->
-        <div class="mt-4">
-            <a href="/shift_stats" 
-               class="btn btn-primary {% if not hub or hub == '' %}btn-active{% endif %}">
-               Wszystkie
-            </a>
-            <a href="/shift_stats?hub=Manila" 
-               class="btn btn-primary {% if hub == 'Manila' %}btn-active{% endif %}">
-               Manila
-            </a>
-            <a href="/shift_stats?hub=Warsaw" 
-               class="btn btn-primary {% if hub == 'Warsaw' %}btn-active{% endif %}">
-               Warsaw
-            </a>
-            <a href="/shift_stats?hub=Mexico" 
-               class="btn btn-primary {% if hub == 'Mexico' %}btn-active{% endif %}">
-               Mexico
-            </a>
-        </div>
-
-        <!-- Sekcja tabel ustawiona obok siebie -->
-        <div class="tables-container">
-
-            <!-- Tabela zmian -->
-            <div class="shift-table">
-                <h3>Shift Counts</h3>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Shift Type</th>
-                            <th>Number of Agents</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for shift, count in shift_counts.items() %}
-                            <tr>
-                                <td>{{ shift }}</td>
-                                <td>
-                                    <a href="/shift_stats?hub={{ hub | default('') }}&shift={{ shift }}" class="agent-link">{{ count }}</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Tabela agentów, otwiera się po prawej stronie -->
-            {% if selected_shift %}
-            <div class="agents-table">
-                <h3>Agents on Shift: {{ selected_shift }}</h3>
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Agent Name</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for agent in agents %}
-                            <tr>
-                                <td>{{ agent }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+<div class="container mt-5">
+    <!-- Date Selection Form -->
+    <div class="mt-4 d-flex align-items-center flex-wrap gap-2">
+        <form method="get" action="/shift_stats" class="form-inline d-flex align-items-center mr-3 mb-2">
+            {% if hub %}
+                <input type="hidden" name="hub" value="{{ hub }}">
             {% endif %}
+            {% if selected_shift %}
+                <input type="hidden" name="shift" value="{{ selected_shift }}">
+            {% endif %}
+            <input type="date" id="date" name="date" class="form-control mr-2"
+                   value="{{ selected_date | default('') }}">
+            <button type="submit" class="btn btn-secondary ms-2">Show</button>
+        </form>
 
-        </div>
-
+        <!-- Hub Buttons with date preservation -->
+        <a href="/shift_stats?hub=&date={{ selected_date | default('') }}" class="btn btn-primary mr-2 mb-2 {% if not hub or hub == '' %}btn-active{% endif %}">All</a>
+        <a href="/shift_stats?hub=Manila&date={{ selected_date | default('') }}" class="btn btn-primary mr-2 mb-2 {% if hub == 'Manila' %}btn-active{% endif %}">Manila</a>
+        <a href="/shift_stats?hub=Warsaw&date={{ selected_date | default('') }}" class="btn btn-primary mr-2 mb-2 {% if hub == 'Warsaw' %}btn-active{% endif %}">Warsaw</a>
+        <a href="/shift_stats?hub=Mexico&date={{ selected_date | default('') }}" class="btn btn-primary mr-2 mb-2 {% if hub == 'Mexico' %}btn-active{% endif %}">Mexico</a>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <!-- Tables Section -->
+    <div class="tables-container">
+        <!-- Shift Counts Table -->
+        <div class="shift-table">
+            <h3>Shift Counts</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Shift Code</th>
+                        <th>Shift Name</th>
+                        <th>Number of Agents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shift, count in shift_counts.items() %}
+                        <tr>
+                            <td>{{ shift }}</td>
+                            <td>{{ shift_names.get(shift, 'Unknown') }}</td>
+                            <td>
+                                <a href="/shift_stats?hub={{ hub | default('') }}&shift={{ shift }}&date={{ selected_date | default('') }}" class="agent-link">{{ count }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>                
+            </table>
+        </div>
+
+        <!-- Agent List Table -->
+        {% if selected_shift %}
+        <div class="agents-table">
+            <h3 class="sticky-header">Agents on Shift: {{ shift_names.get(selected_shift, selected_shift) }}</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Agent Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents %}
+                        <tr>
+                            <td>{{ agent }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>        
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .btn-active {
+        background-color: #ff9800 !important;
+        color: white !important;
+        font-weight: bold;
+    }
+    .tables-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 30px;
+        margin-top: 20px;
+    }
+    .shift-table {
+        width: 50%;
+    }
+    .agents-table {
+        width: 40%;
+        max-height: 680px; /* lub dopasuj do swojej tabeli Shift Counts */
+        overflow-y: auto;
+        overflow-x: hidden;
+        border: 1px solid #ddd;
+        padding-right: 5px; /* dla miejsca na scrollbar */
+    }
+    .agents-table h3.sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 3;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    }
+</style>
 {% endblock %}
